@@ -63,8 +63,13 @@ public class SwingEDTCheckAgent {
             ProtectionDomain protectionDomain,
             byte[] classfileBuffer)
             throws IllegalClassFormatException {
-            // Process all classes in javax.swing package which names start with J
-            if (className.startsWith("javax/swing/J")) {
+
+            boolean isSwingModel = className.startsWith("javax/swing/") && className.endsWith("Model");
+
+            // Process all classes in javax.swing package whose names start with J
+            boolean isSwingUI = className.startsWith("javax/swing/J");
+
+            if (isSwingUI || isSwingModel) {
                 ClassReader cr = new ClassReader(classfileBuffer);
                 ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
                 ClassVisitor cv = new EdtCheckerClassAdapter(cw, throwing);
@@ -93,7 +98,10 @@ public class SwingEDTCheckAgent {
             MethodVisitor mv =
                 cv.visitMethod(access, name, desc, signature, exceptions);
 
-            if (name.startsWith("set") || name.startsWith("get") || name.startsWith("is")) {
+            // an add/remove method that is not for listeners
+            boolean isAddRemove = (name.startsWith("add") || name.startsWith("remove")) && !name.contains("Listener");
+
+            if (name.startsWith("set") || name.startsWith("get") || name.startsWith("is") || isAddRemove) {
                 return new EdtCheckerMethodAdapter(mv, throwing);
             } else {
                 return mv;
