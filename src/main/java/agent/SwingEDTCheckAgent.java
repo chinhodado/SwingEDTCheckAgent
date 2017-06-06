@@ -13,7 +13,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
-/**
+/*
  * Original source: StackOverflow: 
  * http://stackoverflow.com/questions/17760204/how-to-check-a-swing-application-for-correct-use-of-the-edt-event-dispatch-thre
  * By user: ruediste http://stackoverflow.com/users/1290557/ruediste
@@ -26,14 +26,14 @@ import org.objectweb.asm.Opcodes;
  * 
  * To use it, add
  * <pre>
- * ${workspace_loc:mespas/tool/util/swingEDTCheck}/swingEDTCheck.jar
+ *  -javaagent:path_to/SwingEDTCheckAgent-all.jar
  * </pre>
  * 
  * to the VM arguments of a run configuration. This will cause the stack traces to be dumped.
- * 
+ * <p>
  * Use
  * <pre>
- * ${workspace_loc:mespas/tool/util/swingEDTCheck}/swingEDTCheck.jar=throw
+ *  -javaagent:path_to/SwingEDTCheckAgent-all.jar=throw
  * </pre>
  * to throw exceptions.
  * 
@@ -95,8 +95,7 @@ public class SwingEDTCheckAgent {
             final String desc,
             final String signature,
             final String[] exceptions) {
-            MethodVisitor mv =
-                cv.visitMethod(access, name, desc, signature, exceptions);
+            MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
 
             // an add/remove method that is not for listeners
             boolean isAddRemove = (name.startsWith("add") || name.startsWith("remove")) && !name.contains("Listener");
