@@ -80,7 +80,7 @@ public class SwingEDTCheckAgent {
         private final boolean throwing;
 
         public EdtCheckerClassAdapter(ClassVisitor classVisitor, boolean throwing) {
-            super(Opcodes.ASM4, classVisitor);
+            super(Opcodes.ASM5, classVisitor);
             this.throwing = throwing;
         }
 
@@ -106,29 +106,39 @@ public class SwingEDTCheckAgent {
         private final boolean throwing;
 
         public EdtCheckerMethodAdapter(MethodVisitor methodVisitor, boolean throwing) {
-            super(Opcodes.ASM4, methodVisitor);
+            super(Opcodes.ASM5, methodVisitor);
             this.throwing = throwing;
         }
 
         @Override
         public void visitCode() {
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/awt/EventQueue", "isDispatchThread", "()Z");
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/awt/EventQueue", "isDispatchThread", "()Z", false);
             Label l1 = new Label();
             mv.visitJumpInsn(Opcodes.IFNE, l1);
             Label l2 = new Label();
             mv.visitLabel(l2);
+            String warnTxt = "Swing Component called from outside the EDT. Use invokeLater/invokeAndWait/SwingWorker instead.";
 
             if (throwing) {
                 // more Aggressive: throw exception
+
+                /* throw new RuntimeException(warnTxt); */
                 mv.visitTypeInsn(Opcodes.NEW, "java/lang/RuntimeException");
                 mv.visitInsn(Opcodes.DUP);
-                mv.visitLdcInsn("Swing Component called from outside the EDT");
-                mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
+                mv.visitLdcInsn(warnTxt);
+                mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V", false);
                 mv.visitInsn(Opcodes.ATHROW);
 
             } else {
                 // this just dumps the Stack Trace
-                mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "dumpStack", "()V");
+
+                /* System.err.println(warnTxt); */
+                mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
+                mv.visitLdcInsn(warnTxt);
+                mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+
+                /* Thread.dumpStack(); */
+                mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "dumpStack", "()V", false);
             }
             mv.visitLabel(l1);
         }
